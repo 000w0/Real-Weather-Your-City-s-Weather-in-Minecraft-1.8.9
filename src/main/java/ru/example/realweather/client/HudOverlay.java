@@ -6,6 +6,7 @@ import java.util.Locale;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.FontRenderer;
 import net.minecraft.client.gui.Gui;
+import net.minecraft.client.resources.I18n;
 
 public final class HudOverlay {
     private static final DateTimeFormatter CLOCK = DateTimeFormatter.ofPattern("HH:mm");
@@ -52,28 +53,30 @@ public final class HudOverlay {
     }
 
     private static String[] lines(WeatherConfig config, WeatherSnapshot snapshot, String error) {
-        String title = config.cityName == null || config.cityName.isEmpty() ? "Погода" : config.cityName;
+        String title = config.cityName == null || config.cityName.isEmpty()
+                ? I18n.format("realweather.hud.weather") : config.cityName;
         if (snapshot == null) {
-            return new String[] {title, error == null ? "Загрузка данных..." : "Нет данных",
-                    error == null ? "O — настройки" : error};
+            return new String[] {title,
+                    I18n.format(error == null ? "realweather.hud.loading" : "realweather.hud.noData"),
+                    I18n.format(error == null ? "realweather.hud.openSettings" : error)};
         }
         String temperature = String.format(Locale.ROOT, "%+.1f°C", snapshot.temperatureCelsius);
         String weather = weatherName(snapshot.condition);
         ZonedDateTime cityNow = ZonedDateTime.now(snapshot.cityZone);
         String observed = CLOCK.format(snapshot.observationTime);
         String status = error == null
-                ? CLOCK.format(cityNow) + "  ·  данные " + observed
-                : "Нет связи · данные от " + observed;
+                ? I18n.format("realweather.hud.observed", CLOCK.format(cityNow), observed)
+                : I18n.format("realweather.hud.disconnected", observed);
         return new String[] {title, temperature + "  ·  " + weather, status};
     }
 
     private static String weatherName(WeatherCondition condition) {
         switch (condition) {
-            case CLEAR: return "Ясно";
-            case RAIN: return "Дождь";
-            case SNOW: return "Снег";
-            case THUNDER: return "Гроза";
-            default: return "Погода";
+            case CLEAR: return I18n.format("realweather.weather.clear");
+            case RAIN: return I18n.format("realweather.weather.rain");
+            case SNOW: return I18n.format("realweather.weather.snow");
+            case THUNDER: return I18n.format("realweather.weather.thunder");
+            default: return I18n.format("realweather.hud.weather");
         }
     }
 }

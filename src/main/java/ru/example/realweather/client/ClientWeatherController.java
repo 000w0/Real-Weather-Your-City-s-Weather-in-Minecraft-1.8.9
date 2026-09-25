@@ -2,6 +2,7 @@ package ru.example.realweather.client;
 
 import java.time.Instant;
 import java.time.ZonedDateTime;
+import java.util.Locale;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.ThreadFactory;
@@ -68,13 +69,16 @@ public final class ClientWeatherController {
 
     public void searchCity(final String query, final CitySearchCallback callback) {
         final Minecraft minecraft = Minecraft.getMinecraft();
+        final String minecraftLanguage = minecraft.getLanguageManager()
+                .getCurrentLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
+        final String searchLanguage = minecraftLanguage.startsWith("ru") ? "ru" : "en";
         networkExecutor.execute(new Runnable() {
             @Override
             public void run() {
                 CityLocation result = null;
                 String error = null;
                 try {
-                    result = OpenMeteoClient.searchCity(query);
+                    result = OpenMeteoClient.searchCity(query, searchLanguage);
                 } catch (Exception e) {
                     error = e.getMessage();
                     RealWeatherMod.LOGGER.warn("City search failed: {}", e.toString());
@@ -146,7 +150,7 @@ public final class ClientWeatherController {
         }
         Minecraft minecraft = Minecraft.getMinecraft();
         if (minecraft.theWorld != null && minecraft.currentScreen == null) {
-            String hudError = config.valid ? lastError : "Проверьте координаты (O)";
+            String hudError = config.valid ? lastError : "realweather.hud.invalidConfig";
             HudOverlay.draw(minecraft, config, snapshot, hudError,
                     event.resolution.getScaledWidth(), event.resolution.getScaledHeight());
         }
@@ -189,7 +193,7 @@ public final class ClientWeatherController {
                                 return;
                             }
                             desiredWeather = null;
-                            lastError = e.getMessage();
+                            lastError = "realweather.hud.updateFailed";
                             RealWeatherMod.LOGGER.warn("Open-Meteo update failed; Minecraft weather "
                                     + "was left unchanged: {}", e.toString());
                         }

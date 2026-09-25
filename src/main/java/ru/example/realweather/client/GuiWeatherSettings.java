@@ -5,6 +5,7 @@ import java.util.Locale;
 import net.minecraft.client.gui.GuiButton;
 import net.minecraft.client.gui.GuiScreen;
 import net.minecraft.client.gui.GuiTextField;
+import net.minecraft.client.resources.I18n;
 
 public final class GuiWeatherSettings extends GuiScreen {
     private final ClientWeatherController controller;
@@ -50,26 +51,26 @@ public final class GuiWeatherSettings extends GuiScreen {
         intervalField.setMaxStringLength(6);
         intervalField.setText(draftInterval);
 
-        searchButton = new GuiButton(1, left + 165, 44, 75, 20, "Найти");
+        searchButton = new GuiButton(1, left + 165, 44, 75, 20, I18n.format("realweather.settings.search"));
         enabledButton = new GuiButton(2, left + 125, 116, 115, 20, enabledLabel());
         timeButton = new GuiButton(3, left, 143, 240, 20, timeLabel());
         buttonList.add(searchButton);
         buttonList.add(enabledButton);
         buttonList.add(timeButton);
-        buttonList.add(new GuiButton(4, left, 169, 240, 20, "Переместить панель"));
-        buttonList.add(new GuiButton(5, left, 195, 115, 20, "Сохранить"));
-        buttonList.add(new GuiButton(6, left + 125, 195, 115, 20, "Закрыть"));
+        buttonList.add(new GuiButton(4, left, 169, 240, 20, I18n.format("realweather.settings.movePanel")));
+        buttonList.add(new GuiButton(5, left, 195, 115, 20, I18n.format("realweather.settings.save")));
+        buttonList.add(new GuiButton(6, left + 125, 195, 115, 20, I18n.format("realweather.settings.close")));
     }
 
     @Override
     public void drawScreen(int mouseX, int mouseY, float partialTicks) {
         drawDefaultBackground();
         int left = width / 2 - 120;
-        drawCenteredString(fontRendererObj, "Real Weather — настройки", width / 2, 15, 0xFFFFFF);
-        fontRendererObj.drawStringWithShadow("Город", left, 33, 0xCCCCCC);
-        fontRendererObj.drawStringWithShadow("Широта", left, 69, 0xCCCCCC);
-        fontRendererObj.drawStringWithShadow("Долгота", left + 125, 69, 0xCCCCCC);
-        fontRendererObj.drawStringWithShadow("Интервал (мин)", left, 105, 0xCCCCCC);
+        drawCenteredString(fontRendererObj, I18n.format("realweather.settings.title"), width / 2, 15, 0xFFFFFF);
+        fontRendererObj.drawStringWithShadow(I18n.format("realweather.settings.city"), left, 33, 0xCCCCCC);
+        fontRendererObj.drawStringWithShadow(I18n.format("realweather.settings.latitude"), left, 69, 0xCCCCCC);
+        fontRendererObj.drawStringWithShadow(I18n.format("realweather.settings.longitude"), left + 125, 69, 0xCCCCCC);
+        fontRendererObj.drawStringWithShadow(I18n.format("realweather.settings.interval"), left, 105, 0xCCCCCC);
         cityField.drawTextBox();
         latitudeField.drawTextBox();
         longitudeField.drawTextBox();
@@ -145,11 +146,11 @@ public final class GuiWeatherSettings extends GuiScreen {
     private void searchCity() {
         final String query = cityField.getText().trim();
         if (query.length() < 2) {
-            message = "Введите минимум 2 символа для поиска города";
+            message = I18n.format("realweather.settings.searchTooShort");
             return;
         }
         searchButton.enabled = false;
-        message = "Поиск города...";
+        message = I18n.format("realweather.settings.searching");
         controller.searchCity(query, new ClientWeatherController.CitySearchCallback() {
             @Override
             public void complete(CityLocation city, String error) {
@@ -158,13 +159,14 @@ public final class GuiWeatherSettings extends GuiScreen {
                 }
                 searchButton.enabled = true;
                 if (city == null) {
-                    message = "Поиск не удался: " + error;
+                    message = I18n.format(error == null
+                            ? "realweather.settings.cityNotFound" : "realweather.settings.searchFailed");
                     return;
                 }
                 cityField.setText(city.displayName);
                 latitudeField.setText(String.format(Locale.ROOT, "%.5f", city.latitude));
                 longitudeField.setText(String.format(Locale.ROOT, "%.5f", city.longitude));
-                message = "Найдено: " + city.displayName + ". Нажмите «Сохранить».";
+                message = I18n.format("realweather.settings.found", city.displayName);
             }
         });
     }
@@ -177,23 +179,25 @@ public final class GuiWeatherSettings extends GuiScreen {
             String error = controller.getConfig().update(enabled, syncDayNight,
                     cityField.getText(), latitude, longitude, interval);
             if (error != null) {
-                message = error;
+                message = I18n.format(error);
                 return false;
             }
             controller.settingsChanged();
             return true;
         } catch (NumberFormatException e) {
-            message = "Проверьте числа: широту, долготу и интервал";
+            message = I18n.format("realweather.settings.invalidNumbers");
             return false;
         }
     }
 
     private String enabledLabel() {
-        return "Мод: " + (enabled ? "вкл" : "выкл");
+        return I18n.format("realweather.settings.mod", I18n.format(enabled
+                ? "realweather.common.on" : "realweather.common.off"));
     }
 
     private String timeLabel() {
-        return "Время города: " + (syncDayNight ? "вкл" : "выкл");
+        return I18n.format("realweather.settings.cityTime", I18n.format(syncDayNight
+                ? "realweather.common.on" : "realweather.common.off"));
     }
 
     @Override

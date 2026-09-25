@@ -83,22 +83,23 @@ public final class OpenMeteoClient {
         }
     }
 
-    public static CityLocation searchCity(String query) throws IOException {
+    public static CityLocation searchCity(String query, String language) throws IOException {
         String trimmed = query.trim();
         if (trimmed.length() < 2) {
             throw new IOException("Enter at least two characters in the city name");
         }
         String url = "https://geocoding-api.open-meteo.com/v1/search?name="
-                + URLEncoder.encode(trimmed, "UTF-8") + "&count=1&language=ru&format=json";
+                + URLEncoder.encode(trimmed, "UTF-8") + "&count=1&language="
+                + URLEncoder.encode(language, "UTF-8") + "&format=json";
         JsonObject root = getJson(new URL(url));
         try {
             JsonElement results = root.get("results");
             if (results == null || !results.isJsonArray()) {
-                throw new IOException("City not found: " + trimmed);
+                return null;
             }
             JsonArray array = results.getAsJsonArray();
             if (array.size() == 0) {
-                throw new IOException("City not found: " + trimmed);
+                return null;
             }
             JsonObject city = array.get(0).getAsJsonObject();
             String name = required(city, "name").getAsString();

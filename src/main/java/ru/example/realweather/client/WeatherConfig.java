@@ -61,14 +61,14 @@ public final class WeatherConfig {
     public String update(boolean enabled, boolean syncDayNight, String cityName,
                          double latitude, double longitude, int interval) {
         if (!validCoordinates(latitude, longitude)) {
-            return "Широта: -90..90; долгота: -180..180";
+            return "realweather.settings.invalidCoordinates";
         }
         if (!validInterval(interval)) {
-            return "Интервал: от 1 до 1440 минут";
+            return "realweather.settings.invalidInterval";
         }
         this.enabled = enabled;
         this.syncDayNight = syncDayNight;
-        this.cityName = cityName.trim().isEmpty() ? "Город" : cityName.trim();
+        this.cityName = cityName.trim();
         this.latitude = latitude;
         this.longitude = longitude;
         this.updateIntervalMinutes = interval;

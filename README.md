@@ -1,50 +1,55 @@
-# Real Weather 1.1.1 для Minecraft Forge 1.8.9
+# Real Weather 1.2.0 for Minecraft Forge 1.8.9
 
-Клиентский мод показывает текущую температуру и погоду города на экране, синхронизирует видимую погоду и время суток в Minecraft с Open-Meteo. На сервер ничего не отправляется: серверное время, осадки, молнии и другие игровые механики остаются прежними.
+Real Weather is a client-side mod that displays a selected city's current temperature and weather in Minecraft. It also synchronizes the visible weather and time of day with Open-Meteo. The mod does not send changes to the server, so server time, precipitation, lightning, and other gameplay mechanics remain under server control.
 
-## Установка
+## Installation
 
-1. Установите Minecraft 1.8.9 с Forge `11.15.1.2318`.
-2. Поместите `realweather-1.8.9-1.1.1.jar` в `.minecraft/mods` **клиента** и удалите предыдущий JAR мода. На сервер JAR не нужен.
-3. Запустите игру и войдите в мир. Нажмите **O** (латинская O), чтобы открыть настройки. Клавишу можно переназначить в обычном меню управления Minecraft.
-4. Введите название города и нажмите **«Найти»**. Проверьте найденные координаты и нажмите **«Сохранить»**. Можно сразу ввести широту и долготу вручную.
-5. Там же меняются интервал запросов, включение мода и привязка времени города. Кнопка **«Переместить панель»** открывает режим перетаскивания; положение сохраняется после отпускания мыши.
+1. Install Minecraft 1.8.9 with Forge `11.15.1.2318`.
+2. Put `realweather-1.8.9-1.2.0.jar` in the **client's** `.minecraft/mods` folder. Remove any older Real Weather JAR from that folder. The mod is not needed on the server.
+3. Launch the game and join a world. Press **O** (the letter O) to open the settings. You can rebind this key in Minecraft's Controls menu.
+4. Enter a city name and click **Search**. Check the coordinates returned by the search, then click **Save**. You can also enter latitude and longitude manually.
+5. In the same screen, set the update interval, enable or disable the mod, and toggle city time synchronization. Click **Move panel** to drag the HUD panel; its position is saved when you release the mouse.
 
-При первом запуске создаётся `.minecraft/config/realweather.cfg`. Пример с координатами Киева находится в [`config/realweather.cfg`](config/realweather.cfg). Все настройки можно менять в игре без перезапуска.
+On first launch, the mod creates `.minecraft/config/realweather.cfg`. An example configuration with Kyiv coordinates is included at [`config/realweather.cfg`](config/realweather.cfg). You can change settings in game without restarting.
 
-## Время и данные на панели
+## Languages
 
-При включённой привязке клиентское время суток соответствует местному времени города: 00:00 — полночь, 06:00 — восход, 12:00 — полдень, 18:00 — закат. Это привязка к часам города, а не к астрономическому восходу и закату. Часовой пояс приходит от Open-Meteo (`timezone=auto`), затем текущее время рассчитывается локально. Перед каждым кадром мод исправляет клиентское время, если сервер прислал своё, чтобы небо не мигало. Меняется только видимое время клиентского мира.
+The settings, HUD, and status messages follow Minecraft's selected language. English and Russian are included; other languages use English. Change the language in Minecraft's Language menu and reopen the settings screen to refresh its buttons. City search requests names in English or Russian to match the selected language. Previously saved city names are kept as entered.
 
-Панель показывает город, температуру в °C, описание погоды, местное время и время погодных данных Open-Meteo. Время последнего успешного запроса записывается в лог. При ошибке связи последние полученные значения остаются на панели с пометкой **«Нет связи»**. Погода при ошибке не изменяется.
+## City time and HUD data
 
-## Соответствие погоды
+When city time synchronization is enabled, the client's time of day follows the city's local clock: 00:00 is midnight, 06:00 is sunrise, 12:00 is noon, and 18:00 is sunset. This follows the clock, not the city's astronomical sunrise and sunset. Open-Meteo provides the time zone with `timezone=auto`; the mod calculates the current local time and corrects the client clock before each rendered frame to prevent server time updates from making the sky flash. Only the visible client world time changes.
 
-| Коды Open-Meteo | Клиентская погода |
+The HUD shows the city, temperature in °C, weather description, local time, and the observation time of the Open-Meteo data. The time of the last successful request is written to the log. If the connection fails, the last received values remain on the panel with a **No connection** status. The current weather is left unchanged when an update fails.
+
+## Weather mapping
+
+| Open-Meteo codes | Client weather |
 | --- | --- |
-| `0–3`, `45`, `48` | Без осадков |
-| `51–57`, `61–67`, `80–82` | Дождь |
-| `71`, `73`, `75`, `77`, `85`, `86` | Снег в холодном биоме, иначе дождь |
-| `95–97`, `99` | Гроза |
+| `0–3`, `45`, `48` | No precipitation |
+| `51–57`, `61–67`, `80–82` | Rain |
+| `71`, `73`, `75`, `77`, `85`, `86` | Snow in cold biomes; rain otherwise |
+| `95–97`, `99` | Thunderstorm |
 
-Minecraft 1.8.9 использует общий флаг для дождя и снега: ванильный рендерер выбирает вид осадков по температуре биома. Поэтому обычный дождь Open-Meteo в холодном биоме может выглядеть как снег, а биомы без осадков не показывают дождь. Панель при этом показывает реальные данные Open-Meteo.
+Minecraft 1.8.9 uses the same rain flag for rain and snow. The vanilla renderer chooses the precipitation effect based on biome temperature. As a result, Open-Meteo rain may look like snow in a cold biome, and biomes that do not allow precipitation may show no rain. The HUD still displays the actual Open-Meteo conditions.
 
-## Сборка
+## Building
 
-Нужен **JDK 8**. Первая сборка требует доступа к Gradle и Forge Maven. Используются ForgeGradle 2.1 и Gradle 2.7.
+You need **JDK 8**. The first build requires access to Gradle and the Forge Maven repository. This project uses ForgeGradle 2.1 and Gradle 2.7.
 
-1. Откройте терминал в корне `real-weather-forge-1.8.9`.
-2. Проверьте `java -version` и убедитесь, что выбрана Java 8.
-3. На Windows выполните `gradlew.bat setupDecompWorkspace`, затем `gradlew.bat build`. На Linux/macOS выполните `./gradlew setupDecompWorkspace`, затем `./gradlew build`.
-4. Готовый мод находится в `build/libs/realweather-1.8.9-1.1.1.jar`. Файл `-sources.jar` не устанавливайте в игру.
+1. Open a terminal in the `real-weather-forge-1.8.9` project root.
+2. Run `java -version` and confirm that Java 8 is selected.
+3. On Windows, run `gradlew.bat setupDecompWorkspace`, then `gradlew.bat build`. On Linux or macOS, run `./gradlew setupDecompWorkspace`, then `./gradlew build`.
+4. The built mod is at `build/libs/realweather-1.8.9-1.2.0.jar`. Do not install the `-sources.jar` file.
 
-## Проверка
+## Verification
 
-1. Откройте настройки клавишей **O**, найдите город, сохраните его и убедитесь, что на панели появились температура, погода и местное время.
-2. Нажмите **«Переместить панель»**, перетащите её, выйдите из игры и войдите снова. Панель должна остаться на выбранном месте.
-3. Проверьте время при включённой и выключенной опции **«Время города»**. Изменение должно быть видно только вашему клиенту.
-4. Для быстрой проверки обновления поставьте интервал `1` минута. В `logs/latest.log` найдите `Open-Meteo update succeeded at ...`.
-5. Отключите интернет или задайте неправильные координаты. Мод должен оставить текущую погоду и записать ошибку в лог; при ошибке сети панель пометит данные как последние полученные.
-6. На многопользовательском сервере сравните погоду и время с другим клиентом без мода: серверный мир не должен измениться.
+1. Press **O**, search for a city, save it, and confirm that the panel shows the temperature, weather, and local time.
+2. Click **Move panel**, drag the panel, leave the world, and rejoin. It should remain at the saved position.
+3. Toggle **City time** and confirm that the time change is visible only on your client.
+4. For a quick update check, set the interval to `1` minute. Look for `Open-Meteo update succeeded at ...` in `logs/latest.log`.
+5. Disconnect from the internet or enter invalid coordinates. The mod should leave the current weather unchanged and log an error. On a network failure, the HUD marks the displayed weather data as the last received values.
+6. On a multiplayer server, compare the weather and time with a client without the mod. The server world should not change.
+7. Switch Minecraft between English and Russian, then reopen the settings. Check the buttons, HUD, status messages, and city search results in each language.
 
-Запросы погоды и поиска города выполняются в отдельном потоке с таймаутом 5 секунд на соединение и чтение. Результаты применяются в клиентском потоке через `Minecraft.addScheduledTask`. API-ключ не используется.
+Weather and city searches run on a background thread with 5-second connection and read timeouts. Results are applied on the client thread through `Minecraft.addScheduledTask`. No API key is used.

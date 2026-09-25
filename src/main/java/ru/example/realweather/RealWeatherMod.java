@@ -7,7 +7,7 @@ import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 import ru.example.realweather.proxy.CommonProxy;
 
-@Mod(modid = RealWeatherMod.MOD_ID, name = "Real Weather", version = "1.1.1",
+@Mod(modid = RealWeatherMod.MOD_ID, name = "Real Weather", version = "1.2.0",
         clientSideOnly = true, acceptableRemoteVersions = "*")
 public class RealWeatherMod {
     public static final String MOD_ID = "realweather";

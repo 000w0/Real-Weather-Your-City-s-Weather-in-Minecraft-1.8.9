@@ -6,7 +6,7 @@
     "version": "${version}",
     "mcversion": "${mcversion}",
     "authorList": ["000w0"],
-    "credits": ["codex"],
+    "credits": "codex",
     "url": "https://open-meteo.com/"
   }
 ]
