@@ -1,0 +1,12 @@
+[
+  {
+    "modid": "realweather",
+    "name": "Real Weather",
+    "description": "Client-side Minecraft weather synchronized with Open-Meteo.",
+    "version": "${version}",
+    "mcversion": "${mcversion}",
+    "authorList": ["000w0"],
+    "credits": ["codex"],
+    "url": "https://open-meteo.com/"
+  }
+]
