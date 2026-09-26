@@ -1,16 +1,22 @@
-# Real Weather 1.2.0 for Minecraft Forge 1.8.9
+# Real Weather 1.3.0 for Minecraft Forge 1.8.9
 
 Real Weather is a client-side mod that displays a selected city's current temperature and weather in Minecraft. It also synchronizes the visible weather and time of day with Open-Meteo. The mod does not send changes to the server, so server time, precipitation, lightning, and other gameplay mechanics remain under server control.
 
 ## Installation
 
 1. Install Minecraft 1.8.9 with Forge `11.15.1.2318`.
-2. Put `realweather-1.8.9-1.2.0.jar` in the **client's** `.minecraft/mods` folder. Remove any older Real Weather JAR from that folder. The mod is not needed on the server.
+2. Put `realweather-1.8.9-1.3.0.jar` in the **client's** `.minecraft/mods` folder. Remove any older Real Weather JAR from that folder. The mod is not needed on the server.
 3. Launch the game and join a world. Press **O** (the letter O) to open the settings. You can rebind this key in Minecraft's Controls menu.
-4. Enter a city name and click **Search**. Check the coordinates returned by the search, then click **Save**. You can also enter latitude and longitude manually.
+4. Enter a city name and click **Search**. Check the coordinates returned by the search, then click **Save**. You can also enter latitude and longitude manually: after you stop typing, the city field is filled from those coordinates. Wait for the result before clicking **Save**.
 5. In the same screen, set the update interval, enable or disable the mod, and toggle city time synchronization. Click **Move panel** to drag the HUD panel; its position is saved when you release the mouse.
 
 On first launch, the mod creates `.minecraft/config/realweather.cfg`. An example configuration with Kyiv coordinates is included at [`config/realweather.cfg`](config/realweather.cfg). You can change settings in game without restarting.
+
+## Finding a city from coordinates
+
+Editing latitude or longitude starts a lookup after a 1.4-second pause. The mod searches for a nearby city or locality within 50 km and fills the city field automatically. Results are applied only if the coordinates are still the ones you entered. If no place is found or the service is unavailable, you can type the city name yourself and still use the coordinates for weather.
+
+Reverse city lookup uses [Photon](https://github.com/komoot/photon), which uses OpenStreetMap place data. The entered coordinates are sent to `photon.komoot.io` for this lookup; weather requests continue to use Open-Meteo. The lookup has a 3-second minimum gap between requests and runs outside the game thread. Place data: © [OpenStreetMap contributors](https://www.openstreetmap.org/copyright).
 
 ## Languages
 
@@ -40,7 +46,7 @@ You need **JDK 8**. The first build requires access to Gradle and the Forge Mave
 1. Open a terminal in the `real-weather-forge-1.8.9` project root.
 2. Run `java -version` and confirm that Java 8 is selected.
 3. On Windows, run `gradlew.bat setupDecompWorkspace`, then `gradlew.bat build`. On Linux or macOS, run `./gradlew setupDecompWorkspace`, then `./gradlew build`.
-4. The built mod is at `build/libs/realweather-1.8.9-1.2.0.jar`. Do not install the `-sources.jar` file.
+4. The built mod is at `build/libs/realweather-1.8.9-1.3.0.jar`. Do not install the `-sources.jar` file.
 
 ## Verification
 
@@ -51,5 +57,6 @@ You need **JDK 8**. The first build requires access to Gradle and the Forge Mave
 5. Disconnect from the internet or enter invalid coordinates. The mod should leave the current weather unchanged and log an error. On a network failure, the HUD marks the displayed weather data as the last received values.
 6. On a multiplayer server, compare the weather and time with a client without the mod. The server world should not change.
 7. Switch Minecraft between English and Russian, then reopen the settings. Check the buttons, HUD, status messages, and city search results in each language.
+8. Edit both coordinates to a different city, wait for its name to appear, and click **Save**. Try typing a city name manually after entering coordinates; it should stay as you typed it.
 
 Weather and city searches run on a background thread with 5-second connection and read timeouts. Results are applied on the client thread through `Minecraft.addScheduledTask`. No API key is used.

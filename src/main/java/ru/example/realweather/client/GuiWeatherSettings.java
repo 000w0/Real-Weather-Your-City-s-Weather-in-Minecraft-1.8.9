@@ -8,6 +8,8 @@ import net.minecraft.client.gui.GuiTextField;
 import net.minecraft.client.resources.I18n;
 
 public final class GuiWeatherSettings extends GuiScreen {
+    private static final long LOOKUP_DELAY_MILLIS = 1400L;
+    private static final long LOOKUP_MIN_GAP_MILLIS = 3000L;
     private final ClientWeatherController controller;
     private GuiTextField cityField;
     private GuiTextField latitudeField;
@@ -19,6 +21,12 @@ public final class GuiWeatherSettings extends GuiScreen {
     private boolean enabled;
     private boolean syncDayNight;
     private String message = "";
+    private long coordinateRevision;
+    private long reverseLookupDueAt;
+    private long lastReverseLookupAt;
+    private boolean reverseLookupInFlight;
+    private String lastResolvedCoordinates;
+    private String lastResolvedCity;
 
     public GuiWeatherSettings(ClientWeatherController controller) {
         this.controller = controller;
@@ -80,6 +88,9 @@ public final class GuiWeatherSettings extends GuiScreen {
                     fontRendererObj.trimStringToWidth(message, width - 12),
                     width / 2, 221, 0xFFCC88);
         }
+        String attribution = "© OpenStreetMap contributors";
+        fontRendererObj.drawStringWithShadow(attribution,
+                width - fontRendererObj.getStringWidth(attribution) - 4, height - 10, 0x999999);
         super.drawScreen(mouseX, mouseY, partialTicks);
     }
 
@@ -89,6 +100,11 @@ public final class GuiWeatherSettings extends GuiScreen {
         latitudeField.updateCursorCounter();
         longitudeField.updateCursorCounter();
         intervalField.updateCursorCounter();
+        if (reverseLookupDueAt != 0L && System.currentTimeMillis() >= reverseLookupDueAt
+                && !reverseLookupInFlight
+                && System.currentTimeMillis() - lastReverseLookupAt >= LOOKUP_MIN_GAP_MILLIS) {
+            startCoordinateLookup();
+        }
     }
 
     @Override
@@ -102,13 +118,81 @@ public final class GuiWeatherSettings extends GuiScreen {
 
     @Override
     protected void keyTyped(char typedChar, int keyCode) throws IOException {
-        if (cityField.textboxKeyTyped(typedChar, keyCode)
-                || latitudeField.textboxKeyTyped(typedChar, keyCode)
-                || longitudeField.textboxKeyTyped(typedChar, keyCode)
-                || intervalField.textboxKeyTyped(typedChar, keyCode)) {
+        String oldCity = cityField.getText();
+        if (cityField.textboxKeyTyped(typedChar, keyCode)) {
+            if (!oldCity.equals(cityField.getText())) {
+                coordinateRevision++;
+                reverseLookupDueAt = 0L;
+            }
+            return;
+        }
+        String oldLatitude = latitudeField.getText();
+        String oldLongitude = longitudeField.getText();
+        if (latitudeField.textboxKeyTyped(typedChar, keyCode)
+                || longitudeField.textboxKeyTyped(typedChar, keyCode)) {
+            if (!oldLatitude.equals(latitudeField.getText())
+                    || !oldLongitude.equals(longitudeField.getText())) {
+                coordinatesEdited();
+            }
+            return;
+        }
+        if (intervalField.textboxKeyTyped(typedChar, keyCode)) {
             return;
         }
         super.keyTyped(typedChar, keyCode);
+    }
+
+    private void coordinatesEdited() {
+        coordinateRevision++;
+        reverseLookupDueAt = System.currentTimeMillis() + LOOKUP_DELAY_MILLIS;
+        cityField.setText("");
+        message = I18n.format("realweather.settings.lookupPending");
+    }
+
+    private void startCoordinateLookup() {
+        reverseLookupDueAt = 0L;
+        final double latitude;
+        final double longitude;
+        try {
+            latitude = Double.parseDouble(latitudeField.getText().trim().replace(',', '.'));
+            longitude = Double.parseDouble(longitudeField.getText().trim().replace(',', '.'));
+        } catch (NumberFormatException e) {
+            message = I18n.format("realweather.settings.invalidNumbers");
+            return;
+        }
+        if (!WeatherConfig.validCoordinates(latitude, longitude)) {
+            message = I18n.format("realweather.settings.invalidCoordinates");
+            return;
+        }
+        final String coordinates = String.format(Locale.ROOT, "%.6f,%.6f", latitude, longitude);
+        if (coordinates.equals(lastResolvedCoordinates)) {
+            cityField.setText(lastResolvedCity);
+            message = I18n.format("realweather.settings.coordinateFound", lastResolvedCity);
+            return;
+        }
+        final long revision = coordinateRevision;
+        reverseLookupInFlight = true;
+        lastReverseLookupAt = System.currentTimeMillis();
+        message = I18n.format("realweather.settings.lookupSearching");
+        controller.findCityByCoordinates(latitude, longitude, new ClientWeatherController.CitySearchCallback() {
+            @Override
+            public void complete(CityLocation city, String error) {
+                reverseLookupInFlight = false;
+                if (mc.currentScreen != GuiWeatherSettings.this || revision != coordinateRevision) {
+                    return;
+                }
+                if (city == null) {
+                    message = I18n.format(error == null
+                            ? "realweather.settings.coordinateNotFound"
+                            : "realweather.settings.lookupFailed");
+                    return;
+                }
+                lastResolvedCoordinates = coordinates;
+                lastResolvedCity = city.displayName;
+                cityField.setText(city.displayName);
+                message = I18n.format("realweather.settings.coordinateFound", city.displayName);
+            }
+        });
     }
 
     @Override
@@ -149,6 +233,9 @@ public final class GuiWeatherSettings extends GuiScreen {
             message = I18n.format("realweather.settings.searchTooShort");
             return;
         }
+        coordinateRevision++;
+        reverseLookupDueAt = 0L;
+        final long revision = coordinateRevision;
         searchButton.enabled = false;
         message = I18n.format("realweather.settings.searching");
         controller.searchCity(query, new ClientWeatherController.CitySearchCallback() {
@@ -158,6 +245,9 @@ public final class GuiWeatherSettings extends GuiScreen {
                     return;
                 }
                 searchButton.enabled = true;
+                if (revision != coordinateRevision) {
+                    return;
+                }
                 if (city == null) {
                     message = I18n.format(error == null
                             ? "realweather.settings.cityNotFound" : "realweather.settings.searchFailed");
@@ -176,6 +266,12 @@ public final class GuiWeatherSettings extends GuiScreen {
             double latitude = Double.parseDouble(latitudeField.getText().trim().replace(',', '.'));
             double longitude = Double.parseDouble(longitudeField.getText().trim().replace(',', '.'));
             int interval = Integer.parseInt(intervalField.getText().trim());
+            if (WeatherConfig.validCoordinates(latitude, longitude)
+                    && cityField.getText().trim().isEmpty()
+                    && (reverseLookupDueAt != 0L || reverseLookupInFlight)) {
+                message = I18n.format("realweather.settings.lookupPending");
+                return false;
+            }
             String error = controller.getConfig().update(enabled, syncDayNight,
                     cityField.getText(), latitude, longitude, interval);
             if (error != null) {

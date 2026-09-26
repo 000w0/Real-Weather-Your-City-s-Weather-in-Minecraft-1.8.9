@@ -95,7 +95,7 @@ public final class WeatherConfig {
         configuration.save();
     }
 
-    private static boolean validCoordinates(double latitude, double longitude) {
+    static boolean validCoordinates(double latitude, double longitude) {
         return !Double.isNaN(latitude) && !Double.isInfinite(latitude)
                 && latitude >= -90.0D && latitude <= 90.0D
                 && !Double.isNaN(longitude) && !Double.isInfinite(longitude)

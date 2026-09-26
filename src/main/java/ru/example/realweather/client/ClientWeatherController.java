@@ -40,7 +40,7 @@ public final class ClientWeatherController {
         this.networkExecutor = Executors.newSingleThreadExecutor(new ThreadFactory() {
             @Override
             public Thread newThread(Runnable task) {
-                Thread thread = new Thread(task, "RealWeather-OpenMeteo");
+                Thread thread = new Thread(task, "RealWeather-Network");
                 thread.setDaemon(true);
                 return thread;
             }
@@ -69,9 +69,7 @@ public final class ClientWeatherController {
 
     public void searchCity(final String query, final CitySearchCallback callback) {
         final Minecraft minecraft = Minecraft.getMinecraft();
-        final String minecraftLanguage = minecraft.getLanguageManager()
-                .getCurrentLanguage().getLanguageCode().toLowerCase(Locale.ROOT);
-        final String searchLanguage = minecraftLanguage.startsWith("ru") ? "ru" : "en";
+        final String searchLanguage = searchLanguage(minecraft);
         networkExecutor.execute(new Runnable() {
             @Override
             public void run() {
@@ -93,6 +91,43 @@ public final class ClientWeatherController {
                 });
             }
         });
+    }
+
+    public void findCityByCoordinates(final double latitude, final double longitude,
+                                      final CitySearchCallback callback) {
+        final Minecraft minecraft = Minecraft.getMinecraft();
+        final String language = searchLanguage(minecraft);
+        networkExecutor.execute(new Runnable() {
+            @Override
+            public void run() {
+                CityLocation result = null;
+                String error = null;
+                try {
+                    String name = ReverseGeocodingClient.findCity(latitude, longitude, language);
+                    if (name != null) {
+                        result = new CityLocation(name, latitude, longitude);
+                    }
+                } catch (Exception e) {
+                    error = e.getMessage();
+                    RealWeatherMod.LOGGER.warn("Reverse city lookup failed for {}, {}: {}",
+                            latitude, longitude, e.toString());
+                }
+                final CityLocation city = result;
+                final String message = error;
+                minecraft.addScheduledTask(new Runnable() {
+                    @Override
+                    public void run() {
+                        callback.complete(city, message);
+                    }
+                });
+            }
+        });
+    }
+
+    private static String searchLanguage(Minecraft minecraft) {
+        String selected = minecraft.getLanguageManager().getCurrentLanguage()
+                .getLanguageCode().toLowerCase(Locale.ROOT);
+        return selected.startsWith("ru") ? "ru" : "en";
     }
 
     @SubscribeEvent
